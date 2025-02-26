@@ -81,7 +81,9 @@ app.get("/api/manga", limiter, async (req, res) => {
 });
 
 // Start server
-const PORT = 5000;
-app.listen(PORT, () => {
-    console.log(`Proxy server running on port ${PORT}`);
-});
+// const PORT = 5000;
+// app.listen(PORT, () => {
+//     console.log(`Proxy server running on port ${PORT}`);
+// });
+
+module.exports = app;
