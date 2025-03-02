@@ -537,9 +537,9 @@ app.get("/api/chapter/image/:hash/:fileName", async (req, res) => {
 
 
 
-const PORT = 5000;
-app.listen(PORT, () => {
-    console.log(`Proxy server running on port ${PORT}`);
-});
+// const PORT = 5000;
+// app.listen(PORT, () => {
+//     console.log(`Proxy server running on port ${PORT}`);
+// });
 
-// module.exports = app;
+module.exports = app;
