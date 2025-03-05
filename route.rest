@@ -1,0 +1,45 @@
+GET http://localhost:5000/api/users
+
+###
+
+GET http://localhost:5000/api/users/tescreate1
+
+
+### 
+POST http://localhost:5000/api/users
+Content-Type: application/json
+
+{
+    "email": "brunocan12",
+    "password": "brunocan1",
+    "name": "brunocutedog",
+    "provider": "default"
+}
+
+### 
+PATCH http://localhost:5000/api/users/67c7ce6e811e2b147e930115/bookmark
+Content-Type: application/json
+
+{
+    "mangaId": "00296c8d-a815-4fdd-b4b8-c79c550ee875",
+    "coverId": "bb7a112f-5775-40ff-8494-a27d1c343bd4.jpg",
+    "status": "completed"
+}
+
+###
+DELETE  http://localhost:5000/api/users/67c7ce6e811e2b147e930115/bookmark
+Content-Type: application/json
+
+{
+    "mangaId": "00296c8d-a815-4fdd-b4b8-c79c550ee875"
+}
+
+### 
+POST http://localhost:5000/api/users/login
+Content-Type: application/json
+
+{
+    "email": "brunocan1",
+    "password": "brunocan1",
+    "provider": "default"
+}

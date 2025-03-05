@@ -1,19 +1,39 @@
+require("dotenv").config()
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
 const cors = require("cors");
 const axios = require("axios");
-const sharp = require('sharp');
-const Bottleneck = require('bottleneck');
+const Bottleneck = require("bottleneck");
 const axiosRetry = require("axios-retry").default;
-const path = require("path");
 
-const app = express();
-app.use(cors());
+const path = require("path");
+const sharp = require('sharp');
+
+app.use(cors({
+    origin: ["http://localhost:3000", "https://mangaverseread.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], 
+    allowedHeaders: ["Content-Type"]
+}));
+
+
+mongoose.connect(process.env.DATABASE_URL)
+
+const db = mongoose.connection
+db.on('error', (error) => console.error(error))
+db.once('open', () => console.log("Connected to DB"))
+
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+
+const usersRouter= require("./routes/users")
+app.use("/api/users", usersRouter)
+
 
 const { HttpsProxyAgent } = require("https-proxy-agent");
-
-const proxyAgent = new HttpsProxyAgent("http://vdpckfrg:wj454qohfn4m@38.153.152.244:9594");
 
 const proxies = [
     "http://fpddhbop:y7k3wcruiceu@38.154.227.167:5868",
@@ -38,7 +58,7 @@ const MANGADEX_IMAGE_URL = "https://uploads.mangadex.org";
 
 const limiter = new Bottleneck({
     maxConcurrent: 5,
-    minTime: 200, // 200ms delay between requests
+    minTime: 200, 
 });
 
 
@@ -102,8 +122,9 @@ async function fetchMangaDexData() {
     }
 }
 
+// Manga top new title
 app.get("/api/manga/top", async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
+    res.setHeader("Access-Control-Allow-Origin", "*"); 
     res.setHeader("Access-Control-Allow-Methods", "GET");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -111,7 +132,7 @@ app.get("/api/manga/top", async (req, res) => {
         const data = await fetchMangaDexData();
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -141,6 +162,7 @@ async function searchManga(title) {
     }
 }
 
+// Manga Search
 app.get("/api/manga/search/:title", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*"); 
     res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -151,7 +173,7 @@ app.get("/api/manga/search/:title", async (req, res) => {
         const data = await searchManga(title);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -182,6 +204,7 @@ async function fetchLatestUpdates(limit, offset) {
     }
 }
 
+// Manga Latest
 app.get("/api/manga/latest/:limit/:offset", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
     res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -194,7 +217,7 @@ app.get("/api/manga/latest/:limit/:offset", async (req, res) => {
         const data = await fetchLatestUpdates(limit, offset);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -220,6 +243,7 @@ async function fetchLatestUpdatesMangaIds(ids) {
     }
 }
 
+// Manga Latest Full
 app.get("/api/manga/latest/data", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
     res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -239,10 +263,9 @@ app.get("/api/manga/latest/data", async (req, res) => {
         const data = await fetchLatestUpdatesMangaIds(ids);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
-
 
 //Image
 app.get("/api/manga/cover/:id/:fileName/:size", async (req, res) => {
@@ -282,8 +305,6 @@ app.get("/api/manga/cover/:id/:fileName/:size", async (req, res) => {
     }
 });
 
-
-
 async function fetchMangaDetail(id) {
 
     const params = {
@@ -304,8 +325,9 @@ async function fetchMangaDetail(id) {
     }
 }
 
+// Manga detail id
 app.get("/api/manga/:id", async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");  // Allow all origins
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -313,11 +335,12 @@ app.get("/api/manga/:id", async (req, res) => {
 
     try {
         const data = await fetchMangaDetail(id);
-        res.json(data);
+        res.json({ status: 200, data }); 
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
+
 
 async function fetchMangaChapter(id, offset) {
 
@@ -357,7 +380,7 @@ app.get("/api/manga/chapter/:id/:offset", async (req, res) => {
         const data = await fetchMangaChapter(id, offset);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -385,7 +408,7 @@ async function fetchMangaChapterLimit(id) {
     }
 }
 
-// Proxy endpoint
+// Chapter Limit
 app.get("/api/manga/chapter/limit/:id", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*"); 
     res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -397,10 +420,9 @@ app.get("/api/manga/chapter/limit/:id", async (req, res) => {
         const data = await fetchMangaChapterLimit(id);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
-
 
 async function fetchMangaStat(id) {
 
@@ -421,7 +443,7 @@ async function fetchMangaStat(id) {
     }
 }
 
-// Proxy endpoint
+// Manga Stat
 app.get("/api/manga/stat/:id", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*"); 
     res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -433,7 +455,7 @@ app.get("/api/manga/stat/:id", async (req, res) => {
         const data = await fetchMangaStat(id);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -472,10 +494,9 @@ app.get("/api/manga/stat-ids/:ids", async (req, res) => {
         const data = await fetchMangaStats(ids);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
-
 
 async function fetchChapterDetail(id) {
 
@@ -508,7 +529,7 @@ app.get("/api/chapter/details/:id", async (req, res) => {
         const data = await fetchChapterDetail(id);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch MangaDex data" });
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
@@ -540,7 +561,6 @@ app.get("/api/chapter/image/:hash/:fileName", async (req, res) => {
         res.status(500).sendFile("/fallback-image.jpg", { root: "./public" });
     }
 });
-
 
 
 // const PORT = 5000;
