@@ -36,6 +36,8 @@ app.use("/api/users", usersRouter)
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
 const proxies = [
+    // "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594",
+
     "http://fpddhbop:y7k3wcruiceu@38.154.227.167:5868",
     "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594",
     "http://oixmjtox:g1j49om4psjl@86.38.234.176:6630",
@@ -215,6 +217,92 @@ app.get("/api/manga/latest/:limit/:offset", async (req, res) => {
         const offset = req.params.offset ? parseInt(req.params.offset, 10) : undefined; 
 
         const data = await fetchLatestUpdates(limit, offset);
+        res.json(data);
+    } catch (error) {
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
+    }
+});
+
+async function fetchMostFollowed(limit, offset) {
+    const params = {
+        includes: ["cover_art"],
+        "contentRating": ["safe", "suggestive"],
+        "order[followedCount]": "desc",
+        limit: limit,
+    };
+
+    if (offset !== undefined) {
+        params.offset = offset;
+    }
+
+    const queryString = buildQueryParams(params);
+    const url = `${MANGADEX_API_URL}/manga?${queryString}`;
+
+    console.log("Requesting URL:", url);
+
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch and compress manga cover:", error.message);
+        throw error;
+    }
+}
+
+// Most Followed
+app.get("/api/manga/mostfollowed/:limit/:offset", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*"); 
+    res.setHeader("Access-Control-Allow-Methods", "GET");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    try {
+        const limit = parseInt(req.params.limit, 10);
+        const offset = req.params.offset ? parseInt(req.params.offset, 10) : undefined; 
+
+        const data = await fetchMostFollowed(limit, offset);
+        res.json(data);
+    } catch (error) {
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
+    }
+});
+
+async function fetchHighestRating(limit, offset) {
+    const params = {
+        includes: ["cover_art"],
+        "contentRating": ["safe", "suggestive"],
+        "order[rating]": "desc",
+        limit: limit,
+    };
+
+    if (offset !== undefined) {
+        params.offset = offset;
+    }
+
+    const queryString = buildQueryParams(params);
+    const url = `${MANGADEX_API_URL}/manga?${queryString}`;
+
+    console.log("Requesting URL:", url);
+
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch and compress manga cover:", error.message);
+        throw error;
+    }
+}
+
+// Most Followed
+app.get("/api/manga/highestrating/:limit/:offset", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*"); 
+    res.setHeader("Access-Control-Allow-Methods", "GET");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    try {
+        const limit = parseInt(req.params.limit, 10);
+        const offset = req.params.offset ? parseInt(req.params.offset, 10) : undefined; 
+
+        const data = await fetchHighestRating(limit, offset);
         res.json(data);
     } catch (error) {
         res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
@@ -559,6 +647,55 @@ app.get("/api/chapter/image/:hash/:fileName", async (req, res) => {
     } catch (error) {
         console.error("Failed to fetch manga cover:", error.message);
         res.status(500).sendFile("/fallback-image.jpg", { root: "./public" });
+    }
+});
+
+async function searchMangaFull(reqParams) {
+    const defaultParams = {
+        includes: ["cover_art", "artist", "author"], // Add default includes
+        "contentRating": ["safe", "suggestive"],
+        hasAvailableChapters: true,
+    };
+
+    const queryString = new URLSearchParams();
+
+    Object.entries({ ...defaultParams, ...reqParams }).forEach(([key, value]) => {
+        if (typeof value === "object" && value !== null) {
+            // Handle nested objects (e.g., order: { followedCount: "desc" })
+            Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+                queryString.append(`${key}[${nestedKey}]`, nestedValue);
+            });
+        } else {
+            queryString.append(key, value);
+        }
+    });
+    const url = `${MANGADEX_API_URL}/manga?${queryString}`;
+
+    console.log("Requesting URL:", url);
+    // console.log("queryString:", queryString);
+
+    try {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (error) {
+        console.error("Axios Request Failed:", error.response ? error.response.data : error.message);
+        throw error;
+    }
+}
+
+// Manga Search
+app.get("/api/manga-search/search", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*"); 
+    res.setHeader("Access-Control-Allow-Methods", "GET");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+
+    try {
+        const data = await searchMangaFull(req.query);
+        res.json(data);
+    } catch (error) {
+        console.error("Error in full-search:", error);
+        res.status(error.status || 500).json({ status: error.status || 500, error: "Failed to fetch MangaDex data" });
     }
 });
 
