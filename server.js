@@ -36,25 +36,12 @@ app.use("/api/users", usersRouter)
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
 const proxies = [
-    "http://ceofgdgx:zuqcjeursf8z@38.154.227.167:5868",
-    "http://kicobbpa:tay938inwtj8@38.154.227.167:5868",
-    "http://tdhscynr:2nutwg7zuad6@38.154.227.167:5868",
-    "http://gieurpme:wi7r3sjkeaji@38.154.227.167:5868",
-    "http://jghoxwxh:mi5o4obx4509@38.154.227.167:5868",
-    "http://llaygvtf:warqntejsuw1@38.154.227.167:5868",
-    "http://xkhsgjnr:o05q99j7ymm3@38.154.227.167:5868", //sisa 600
-    "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594", //sisa 500
-    "http://oixmjtox:g1j49om4psjl@86.38.234.176:6630", //sisa 500
-
-    // "http://fpddhbop:y7k3wcruiceu@38.154.227.167:5868",
-    // "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594",
-    // "http://oixmjtox:g1j49om4psjl@86.38.234.176:6630",
-    // "http://xkhsgjnr:o05q99j7ymm3@173.211.0.148:6641",
-    // "http://llaygvtf:warqntejsuw1@23.94.138.75:6349",
-    // "http://jghoxwxh:mi5o4obx4509@64.64.118.149:6732",
-    // "http://gieurpme:wi7r3sjkeaji@198.105.101.92:5721",
-    // "http://tdhscynr:2nutwg7zuad6@166.88.58.10:5735",
-    // "http://kicobbpa:tay938inwtj8@45.151.162.198:6600",
+    "http://vdpckfrg:wj454qohfn4m@38.153.152.244:9594", 
+    "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594", 
+    "http://inabfjpy:jh36nyilfewz@38.153.152.244:9594", 
+    "http://xkhsgjnr:o05q99j7ymm3@38.153.152.244:9594", 
+    "http://oixmjtox:g1j49om4psjl@38.153.152.244:9594", 
+    "http://kicobbpa:tay938inwtj8@38.153.152.244:9594", 
 ];
 
 const getRandomProxy = () => {
