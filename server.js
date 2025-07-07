@@ -36,12 +36,14 @@ app.use("/api/users", usersRouter)
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
 const proxies = [
-    "http://vdpckfrg:wj454qohfn4m@38.153.152.244:9594", 
-    "http://isxbkqzr:8wcntcfy44z4@38.153.152.244:9594", 
-    "http://inabfjpy:jh36nyilfewz@38.153.152.244:9594", 
-    "http://xkhsgjnr:o05q99j7ymm3@38.153.152.244:9594", 
-    "http://oixmjtox:g1j49om4psjl@38.153.152.244:9594", 
-    "http://kicobbpa:tay938inwtj8@38.153.152.244:9594", 
+    "http://vdpckfrg:wj454qohfn4m@38.154.227.167:5868", 
+    "http://inabfjpy:jh36nyilfewz@38.154.227.167:5868", 
+    "http://xkhsgjnr:o05q99j7ymm3@38.154.227.167:5868", 
+    
+    "http://vdpckfrg:wj454qohfn4m@38.154.227.167:5868", 
+    "http://isxbkqzr:8wcntcfy44z4@38.154.227.167:5868", 
+    "http://oixmjtox:g1j49om4psjl@38.154.227.167:5868", 
+    "http://kicobbpa:tay938inwtj8@38.154.227.167:5868", 
 ];
 
 const getRandomProxy = () => {
