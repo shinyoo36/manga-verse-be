@@ -35,25 +35,6 @@ app.use("/api/users", usersRouter);
 
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
-// const proxies = [
-//   //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
-//   "http://inabfjpy:jh36nyilfewz@38.154.203.95:5863",
-//   "http://xkhsgjnr:o05q99j7ymm3@38.154.203.95:5863",
-
-//   //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
-//   //   "http://isxbkqzr:8wcntcfy44z4@38.154.203.95:5863",
-//   //   "http://oixmjtox:g1j49om4psjl@38.154.203.95:5863",
-//   //   "http://kicobbpa:tay938inwtj8@38.154.203.95:5863",
-// ];
-
-// const getRandomProxy = () => {
-//   const randomIndex = Math.floor(Math.random() * proxies.length);
-//   return new HttpsProxyAgent(proxies[randomIndex]);
-// };
-
-// const MANGADEX_API_URL = "https://api.mangadex.org";
-// const MANGADEX_IMAGE_URL = "https://uploads.mangadex.org";
-
 const WORKER_URL = "https://lucky-queen-e8bb.stiven-riandy.workers.dev";
 const MANGADEX_API_URL = WORKER_URL;
 
@@ -61,26 +42,6 @@ const limiter = new Bottleneck({
   maxConcurrent: 5,
   minTime: 200,
 });
-
-// const axiosInstance = axios.create({
-//   timeout: 60000,
-//   httpsAgent: getRandomProxy(),
-//   headers: {
-//     "User-Agent":
-//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-//   },
-// });
-
-// axiosRetry(axios, {
-//   retries: 3,
-//   retryDelay: (retryCount) => {
-//     console.log(`Retry attempt ${retryCount}`);
-//     return retryCount * 1000; // 1s, 2s, 3s exponential backoff
-//   },
-//   retryCondition: (error) => {
-//     return error.response?.status >= 500 || !error.response; // Retry on 5xx errors or no response
-//   },
-// });
 
 const axiosInstance = axios.create({
   timeout: 60000,
