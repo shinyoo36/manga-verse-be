@@ -15,10 +15,7 @@ const sharp = require("sharp");
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://mangaverseread.vercel.app",
-    ],
+    origin: ["http://localhost:3000", "https://mangaverseread.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type"],
   }),
@@ -38,51 +35,69 @@ app.use("/api/users", usersRouter);
 
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
-const proxies = [
-  //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
-  "http://inabfjpy:jh36nyilfewz@38.154.203.95:5863",
-  "http://xkhsgjnr:o05q99j7ymm3@38.154.203.95:5863",
+// const proxies = [
+//   //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
+//   "http://inabfjpy:jh36nyilfewz@38.154.203.95:5863",
+//   "http://xkhsgjnr:o05q99j7ymm3@38.154.203.95:5863",
 
-  //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
-  //   "http://isxbkqzr:8wcntcfy44z4@38.154.203.95:5863",
-  //   "http://oixmjtox:g1j49om4psjl@38.154.203.95:5863",
-  //   "http://kicobbpa:tay938inwtj8@38.154.203.95:5863",
-];
+//   //   "http://vdpckfrg:wj454qohfn4m@38.154.203.95:5863",
+//   //   "http://isxbkqzr:8wcntcfy44z4@38.154.203.95:5863",
+//   //   "http://oixmjtox:g1j49om4psjl@38.154.203.95:5863",
+//   //   "http://kicobbpa:tay938inwtj8@38.154.203.95:5863",
+// ];
 
-const getRandomProxy = () => {
-  const randomIndex = Math.floor(
-    Math.random() * proxies.length,
-  );
-  return new HttpsProxyAgent(proxies[randomIndex]);
-};
+// const getRandomProxy = () => {
+//   const randomIndex = Math.floor(Math.random() * proxies.length);
+//   return new HttpsProxyAgent(proxies[randomIndex]);
+// };
 
-const MANGADEX_API_URL = "https://api.mangadex.org";
-const MANGADEX_IMAGE_URL = "https://uploads.mangadex.org";
+// const MANGADEX_API_URL = "https://api.mangadex.org";
+// const MANGADEX_IMAGE_URL = "https://uploads.mangadex.org";
+
+const WORKER_URL = "https://lucky-queen-e8bb.stiven-riandy.workers.dev";
+const MANGADEX_API_URL = WORKER_URL;
 
 const limiter = new Bottleneck({
   maxConcurrent: 5,
   minTime: 200,
 });
 
+// const axiosInstance = axios.create({
+//   timeout: 60000,
+//   httpsAgent: getRandomProxy(),
+//   headers: {
+//     "User-Agent":
+//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+//   },
+// });
+
+// axiosRetry(axios, {
+//   retries: 3,
+//   retryDelay: (retryCount) => {
+//     console.log(`Retry attempt ${retryCount}`);
+//     return retryCount * 1000; // 1s, 2s, 3s exponential backoff
+//   },
+//   retryCondition: (error) => {
+//     return error.response?.status >= 500 || !error.response; // Retry on 5xx errors or no response
+//   },
+// });
+
 const axiosInstance = axios.create({
   timeout: 60000,
-  httpsAgent: getRandomProxy(),
   headers: {
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   },
 });
 
-axiosRetry(axios, {
+axiosRetry(axiosInstance, {
   retries: 3,
   retryDelay: (retryCount) => {
     console.log(`Retry attempt ${retryCount}`);
-    return retryCount * 1000; // 1s, 2s, 3s exponential backoff
+    return retryCount * 1000;
   },
   retryCondition: (error) => {
-    return (
-      error.response?.status >= 500 || !error.response
-    ); // Retry on 5xx errors or no response
+    return error.response?.status >= 500 || !error.response;
   },
 });
 
@@ -90,9 +105,7 @@ function buildQueryParams(params) {
   let queryString = Object.entries(params)
     .map(([key, value]) => {
       if (Array.isArray(value)) {
-        return value
-          .map((v) => `${key}[]=${encodeURIComponent(v)}`)
-          .join("&");
+        return value.map((v) => `${key}[]=${encodeURIComponent(v)}`).join("&");
       }
       return `${key}=${encodeURIComponent(value)}`;
     })
@@ -104,9 +117,7 @@ function buildQueryParams(params) {
 async function fetchMangaDexData() {
   const currentDate = new Date();
   currentDate.setMonth(currentDate.getMonth() - 1);
-  const formattedDate = currentDate
-    .toISOString()
-    .split(".")[0];
+  const formattedDate = currentDate.toISOString().split(".")[0];
 
   const params = {
     includes: ["cover_art", "artist", "author"],
@@ -127,9 +138,7 @@ async function fetchMangaDexData() {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
@@ -139,10 +148,7 @@ async function fetchMangaDexData() {
 app.get("/api/manga/top", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   try {
     const data = await fetchMangaDexData();
@@ -177,9 +183,7 @@ async function searchManga(title) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
@@ -189,10 +193,7 @@ async function searchManga(title) {
 app.get("/api/manga/search/:title", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   const { title } = req.params;
   try {
@@ -228,44 +229,32 @@ async function fetchLatestUpdates(limit, offset) {
     const response = await axiosInstance.get(url);
     return response.data;
   } catch (error) {
-    console.error(
-      "Failed to fetch and compress manga cover:",
-      error.message,
-    );
+    console.error("Failed to fetch and compress manga cover:", error.message);
     throw error;
   }
 }
 
 // Manga Latest
-app.get(
-  "/api/manga/latest/:limit/:offset",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/latest/:limit/:offset", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    try {
-      const limit = parseInt(req.params.limit, 10);
-      const offset = req.params.offset
-        ? parseInt(req.params.offset, 10)
-        : undefined;
+  try {
+    const limit = parseInt(req.params.limit, 10);
+    const offset = req.params.offset
+      ? parseInt(req.params.offset, 10)
+      : undefined;
 
-      const data = await fetchLatestUpdates(
-        limit,
-        offset,
-      );
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        status: error.status || 500,
-        error: "Failed to fetch MangaDex data",
-      });
-    }
-  },
-);
+    const data = await fetchLatestUpdates(limit, offset);
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      error: "Failed to fetch MangaDex data",
+    });
+  }
+});
 
 async function fetchMostFollowed(limit, offset) {
   const params = {
@@ -288,41 +277,32 @@ async function fetchMostFollowed(limit, offset) {
     const response = await axiosInstance.get(url);
     return response.data;
   } catch (error) {
-    console.error(
-      "Failed to fetch and compress manga cover:",
-      error.message,
-    );
+    console.error("Failed to fetch and compress manga cover:", error.message);
     throw error;
   }
 }
 
 // Most Followed
-app.get(
-  "/api/manga/mostfollowed/:limit/:offset",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/mostfollowed/:limit/:offset", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    try {
-      const limit = parseInt(req.params.limit, 10);
-      const offset = req.params.offset
-        ? parseInt(req.params.offset, 10)
-        : undefined;
+  try {
+    const limit = parseInt(req.params.limit, 10);
+    const offset = req.params.offset
+      ? parseInt(req.params.offset, 10)
+      : undefined;
 
-      const data = await fetchMostFollowed(limit, offset);
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        status: error.status || 500,
-        error: "Failed to fetch MangaDex data",
-      });
-    }
-  },
-);
+    const data = await fetchMostFollowed(limit, offset);
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      error: "Failed to fetch MangaDex data",
+    });
+  }
+});
 
 async function fetchHighestRating(limit, offset) {
   const params = {
@@ -345,44 +325,32 @@ async function fetchHighestRating(limit, offset) {
     const response = await axiosInstance.get(url);
     return response.data;
   } catch (error) {
-    console.error(
-      "Failed to fetch and compress manga cover:",
-      error.message,
-    );
+    console.error("Failed to fetch and compress manga cover:", error.message);
     throw error;
   }
 }
 
 // Most Followed
-app.get(
-  "/api/manga/highestrating/:limit/:offset",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/highestrating/:limit/:offset", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    try {
-      const limit = parseInt(req.params.limit, 10);
-      const offset = req.params.offset
-        ? parseInt(req.params.offset, 10)
-        : undefined;
+  try {
+    const limit = parseInt(req.params.limit, 10);
+    const offset = req.params.offset
+      ? parseInt(req.params.offset, 10)
+      : undefined;
 
-      const data = await fetchHighestRating(
-        limit,
-        offset,
-      );
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        status: error.status || 500,
-        error: "Failed to fetch MangaDex data",
-      });
-    }
-  },
-);
+    const data = await fetchHighestRating(limit, offset);
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      error: "Failed to fetch MangaDex data",
+    });
+  }
+});
 
 async function fetchLatestUpdatesMangaIds(ids) {
   const params = {
@@ -403,9 +371,7 @@ async function fetchLatestUpdatesMangaIds(ids) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
@@ -415,18 +381,13 @@ async function fetchLatestUpdatesMangaIds(ids) {
 app.get("/api/manga/latest/data", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   try {
     let ids = req.query.ids;
 
     if (!ids) {
-      return res
-        .status(400)
-        .json({ error: "No IDs provided" });
+      return res.status(400).json({ error: "No IDs provided" });
     }
 
     if (!Array.isArray(ids)) {
@@ -444,64 +405,50 @@ app.get("/api/manga/latest/data", async (req, res) => {
 });
 
 //Image
-app.get(
-  "/api/manga/cover/:id/:fileName/:size",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/cover/:id/:fileName/:size", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    res.setHeader("Content-Type", "image/jpeg");
-    res.setHeader(
-      "Cache-Control",
-      "public, max-age=86400",
-    );
+  res.setHeader("Content-Type", "image/jpeg");
+  res.setHeader("Cache-Control", "public, max-age=86400");
 
-    const { id, fileName, size } = req.params;
-    const validSizes = ["256", "512", "hd"];
+  const { id, fileName, size } = req.params;
+  const validSizes = ["256", "512", "hd"];
 
-    if (!validSizes.includes(size)) {
-      return res.status(400).json({
-        error:
-          "Invalid size parameter. Use 256, 512, or hd.",
-      });
-    }
+  if (!validSizes.includes(size)) {
+    return res.status(400).json({
+      error: "Invalid size parameter. Use 256, 512, or hd.",
+    });
+  }
 
-    const lastDotIndex = fileName.lastIndexOf(".");
-    if (lastDotIndex === -1) {
-      return res.status(400).json({
-        error:
-          "Invalid file name format. Missing extension.",
-      });
-    }
+  const lastDotIndex = fileName.lastIndexOf(".");
+  if (lastDotIndex === -1) {
+    return res.status(400).json({
+      error: "Invalid file name format. Missing extension.",
+    });
+  }
 
-    const imageUrl =
-      size === "hd"
-        ? `${MANGADEX_IMAGE_URL}/covers/${id}/${fileName}`
-        : `${MANGADEX_IMAGE_URL}/covers/${id}/${fileName}.${size}.jpg`;
+  const imageUrl =
+    size === "hd"
+      ? `https://uploads.mangadex.org/covers/${id}/${fileName}`
+      : `https://uploads.mangadex.org/covers/${id}/${fileName}.${size}.jpg`;
 
-    console.log("imageUrl", imageUrl);
+  console.log("imageUrl", imageUrl);
 
-    try {
-      const response = await axiosInstance.get(imageUrl, {
-        responseType: "stream",
-      });
+  try {
+    const response = await axiosInstance.get(imageUrl, {
+      responseType: "stream",
+    });
 
-      response.data.pipe(res);
-    } catch (error) {
-      console.error(
-        "Failed to fetch manga cover:",
-        error.message,
-      );
-      res.status(500).sendFile("/fallback-image.jpg", {
-        root: "./public",
-      });
-    }
-  },
-);
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Failed to fetch manga cover:", error.message);
+    res.status(500).sendFile("/fallback-image.jpg", {
+      root: "./public",
+    });
+  }
+});
 
 async function fetchMangaDetail(id) {
   const params = {
@@ -519,9 +466,7 @@ async function fetchMangaDetail(id) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
@@ -531,10 +476,7 @@ async function fetchMangaDetail(id) {
 app.get("/api/manga/:id", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   const { id } = req.params;
 
@@ -571,38 +513,30 @@ async function fetchMangaChapter(id, offset) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
 }
 
 // Chapter Feed
-app.get(
-  "/api/manga/chapter/:id/:offset",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/chapter/:id/:offset", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    const { id, offset } = req.params;
+  const { id, offset } = req.params;
 
-    try {
-      const data = await fetchMangaChapter(id, offset);
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        status: error.status || 500,
-        error: "Failed to fetch MangaDex data",
-      });
-    }
-  },
-);
+  try {
+    const data = await fetchMangaChapter(id, offset);
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      error: "Failed to fetch MangaDex data",
+    });
+  }
+});
 
 async function fetchMangaChapterLimit(id) {
   const params = {
@@ -624,38 +558,30 @@ async function fetchMangaChapterLimit(id) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
 }
 
 // Chapter Limit
-app.get(
-  "/api/manga/chapter/limit/:id",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/manga/chapter/limit/:id", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    const { id } = req.params;
+  const { id } = req.params;
 
-    try {
-      const data = await fetchMangaChapterLimit(id);
-      res.json(data);
-    } catch (error) {
-      res.status(error.status || 500).json({
-        status: error.status || 500,
-        error: "Failed to fetch MangaDex data",
-      });
-    }
-  },
-);
+  try {
+    const data = await fetchMangaChapterLimit(id);
+    res.json(data);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      error: "Failed to fetch MangaDex data",
+    });
+  }
+});
 
 async function fetchMangaStat(id) {
   const url = `${MANGADEX_API_URL}/statistics/manga/${id}`;
@@ -679,10 +605,7 @@ async function fetchMangaStat(id) {
 app.get("/api/manga/stat/:id", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   const { id } = req.params;
 
@@ -723,10 +646,7 @@ async function fetchMangaStats(ids) {
 app.get("/api/manga/stat-ids/:ids", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   const ids = req.params.ids.split(",");
 
@@ -763,10 +683,7 @@ async function fetchChapterDetail(id) {
 app.get("/api/chapter/details/:id", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   const { id } = req.params;
 
@@ -782,54 +699,37 @@ app.get("/api/chapter/details/:id", async (req, res) => {
 });
 
 //Chapter Image
-app.get(
-  "/api/chapter/image/:hash/:fileName",
-  async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type",
-    );
+app.get("/api/chapter/image/:hash/:fileName", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    res.setHeader(
-      "Cache-Control",
-      "public, max-age=86400",
-    );
+  res.setHeader("Cache-Control", "public, max-age=86400");
 
-    const { hash, fileName } = req.params;
-    const { baseUrl } = req.query; // Extract baseUrl from query parameters
+  const { hash, fileName } = req.params;
+  const { baseUrl } = req.query; // Extract baseUrl from query parameters
 
-    if (!baseUrl) {
-      return res
-        .status(400)
-        .json({ error: "baseUrl is required" });
-    }
+  if (!baseUrl) {
+    return res.status(400).json({ error: "baseUrl is required" });
+  }
 
-    const imageUrl = `${baseUrl}/data/${hash}/${fileName}`;
-    console.log("imageUrl", imageUrl);
+  const imageUrl = `${baseUrl}/data/${hash}/${fileName}`;
+  console.log("imageUrl", imageUrl);
 
-    try {
-      const response = await axiosInstance.get(imageUrl, {
-        responseType: "stream",
-      });
+  try {
+    const response = await axiosInstance.get(imageUrl, {
+      responseType: "stream",
+    });
 
-      res.setHeader(
-        "Content-Type",
-        response.headers["content-type"],
-      );
-      response.data.pipe(res);
-    } catch (error) {
-      console.error(
-        "Failed to fetch manga cover:",
-        error.message,
-      );
-      res.status(500).sendFile("/fallback-image.jpg", {
-        root: "./public",
-      });
-    }
-  },
-);
+    res.setHeader("Content-Type", response.headers["content-type"]);
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Failed to fetch manga cover:", error.message);
+    res.status(500).sendFile("/fallback-image.jpg", {
+      root: "./public",
+    });
+  }
+});
 
 async function searchMangaFull(reqParams) {
   const defaultParams = {
@@ -846,14 +746,9 @@ async function searchMangaFull(reqParams) {
   }).forEach(([key, value]) => {
     if (typeof value === "object" && value !== null) {
       // Handle nested objects (e.g., order: { followedCount: "desc" })
-      Object.entries(value).forEach(
-        ([nestedKey, nestedValue]) => {
-          queryString.append(
-            `${key}[${nestedKey}]`,
-            nestedValue,
-          );
-        },
-      );
+      Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+        queryString.append(`${key}[${nestedKey}]`, nestedValue);
+      });
     } else {
       queryString.append(key, value);
     }
@@ -869,9 +764,7 @@ async function searchMangaFull(reqParams) {
   } catch (error) {
     console.error(
       "Axios Request Failed:",
-      error.response
-        ? error.response.data
-        : error.message,
+      error.response ? error.response.data : error.message,
     );
     throw error;
   }
@@ -881,10 +774,7 @@ async function searchMangaFull(reqParams) {
 app.get("/api/manga-search/search", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type",
-  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   try {
     const data = await searchMangaFull(req.query);
